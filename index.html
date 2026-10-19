@@ -152,6 +152,9 @@ textarea{min-height:130px;resize:vertical;font-size:1.05rem}
 .seg input:focus-visible+label{outline:2px solid var(--quote);outline-offset:-3px}
 .row{display:grid;grid-template-columns:2fr 1fr;gap:12px}
 .acts{display:flex;gap:10px;justify-content:space-between;align-items:center;flex-wrap:wrap}
+.about{padding:22px 20px calc(22px + env(safe-area-inset-bottom,0px));display:grid;gap:14px}
+.about h2{font-size:1.5rem}
+.about p{margin:0}
 </style>
 </head>
 <body>
@@ -185,7 +188,7 @@ function due(n){return n.due||n.ts+864e5}
 function dueList(){var a=[],now=Date.now();S.books.forEach(function(b){b.notes.forEach(function(n){if(due(n)<=now)a.push([n,b])})});return a.sort(function(x,y){return due(x[0])-due(y[0])})}
 function nextDue(){var m=0;S.books.forEach(function(b){b.notes.forEach(function(n){var d=due(n);if(!m||d<m)m=d})});return m}
 function rateNote(n,r){var s=n.rs||0;if(r==="forgot")s=0;else if(r==="good")s=Math.min(s+1,3);n.rs=s;n.due=Date.now()+DAYS[s]*864e5;n.rc=(n.rc||0)+1;S.days=S.days||[];if(S.days.indexOf(day())<0)S.days.push(day())}
-function reviewHTML(){var L=dueList(),h='<div class="top"><span class="brand">Marginalia</span></div><div class="hero-wrap"><h1 class="hero">Review</h1></div><p class="motto">Pulling an idea out of memory is what makes it stay.</p>';
+function reviewHTML(){var L=dueList(),h='<div class="top"><button class="brand" data-act="about">Marginalia</button></div><div class="hero-wrap"><h1 class="hero">Review</h1></div><p class="motto">Pulling an idea out of memory is what makes it stay.</p>';
 if(!total())return h+'<div class="empty"><b>Nothing to review yet</b>Save a few notes. They come back after 1, 3, 7 and 30 days.</div>';
 if(!L.length){var dd=Math.max(1,Math.ceil((nextDue()-Date.now())/864e5));return h+'<div class="empty"><b>All caught up</b>Your next review is in '+dd+(dd===1?" day":" days")+'.</div>'}
 var n=L[0][0],b=L[0][1],s=n.rs||0,w=n.text.split(/\s+/);
@@ -203,7 +206,7 @@ function bigHTML(b){if(b.big)return '<section class="big"><div class="tag">The o
 function journey(){var M={},T={quote:0,topic:0,story:0},tot=0,fin=0,lk=0;
 function mo(ts){var d=new Date(ts),k=d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2);return M[k]=M[k]||{n:0,bk:[],fin:[],t:{quote:0,topic:0,story:0}}}
 S.books.forEach(function(b){if(b.done){fin++;mo(b.doneTs||Date.now()).fin.push(b)}b.notes.forEach(function(n){var o=mo(n.ts);o.n++;o.t[n.type]++;if(o.bk.indexOf(b)<0)o.bk.push(b);T[n.type]++;tot++;lk+=(n.links||[]).length})});
-var h='<div class="top"><span class="brand">Marginalia</span></div><div class="hero-wrap"><h1 class="hero">Your journey</h1></div><p class="motto">What you keep shows who you are becoming.</p>';
+var h='<div class="top"><button class="brand" data-act="about">Marginalia</button></div><div class="hero-wrap"><h1 class="hero">Your journey</h1></div><p class="motto">What you keep shows who you are becoming.</p>';
 if(!tot&&!fin)return h+'<div class="empty"><b>Your story starts with one note</b>Come back after a few weeks to see how your reading has changed.</div>';
 var ks=Object.keys(M).sort().reverse(),mx=Math.max.apply(null,ks.map(function(k){return M[k].n}))||1,top=["quote","topic","story"].sort(function(a,b){return T[b]-T[a]})[0];
 h+='<div class="sum"><div><b>'+tot+'</b><span>notes</span></div><div><b>'+S.books.length+'</b><span>books</span></div><div><b>'+fin+'</b><span>finished</span></div><div><b>'+Math.floor(lk/2)+'</b><span>links</span></div></div>';
@@ -220,7 +223,7 @@ var C=[[],[[43,100,6],[57,97,6]],[[50,113-h-4,15]],[[50,113-h-6,19],[35,113-h+6,
 C.forEach(function(k){g+='<circle cx="'+k[0]+'" cy="'+k[1]+'" r="'+k[2]+'" fill="'+c+'" opacity=".88"/>'});
 if(st>=2)C.forEach(function(k){g+='<circle cx="'+(k[0]-k[2]*.3)+'" cy="'+(k[1]-k[2]*.3)+'" r="'+k[2]*.4+'" fill="#fff" opacity=".1"/>'})}
 return '<svg viewBox="0 0 100 120" role="img" aria-label="'+STAGES[st]+'">'+g+'</svg>'}
-function garden(){var bs=S.books,done=bs.filter(function(b){return b.done}).length,h='<div class="top"><span class="brand">Marginalia</span><button class="link" data-act="addbook">Add book</button></div><div class="hero-wrap"><h1 class="hero">Your garden</h1></div><p class="motto">Every book you start is a seed. Every one you finish is a tree.</p>';
+function garden(){var bs=S.books,done=bs.filter(function(b){return b.done}).length,h='<div class="top"><button class="brand" data-act="about">Marginalia</button><button class="link" data-act="addbook">Add book</button></div><div class="hero-wrap"><h1 class="hero">Your garden</h1></div><p class="motto">Every book you start is a seed. Every one you finish is a tree.</p>';
 if(!bs.length)return h+'<div class="empty"><b>Nothing planted yet</b>Add a book and its seed goes into the ground.</div><button class="btn primary" data-act="addbook">Plant your first book</button>';
 h+='<p class="sub">'+done+(done===1?" tree":" trees")+' fully grown, '+(bs.length-done)+' still growing.</p><div class="grove">';
 bs.forEach(function(b){var st=stage(b);h+='<button class="tree" data-act="open" data-b="'+b.id+'">'+tree(st,b.color)+'<span class="tt">'+esc(b.title)+'</span><span class="meta">'+STAGES[st]+'</span></button>'});
@@ -236,6 +239,7 @@ return '<section class="stats"><div class="streak"><b>'+s+'</b><span>'+(s===1?"d
 function cuehtml(){return '<button class="cue" data-act="cue">'+(S.cue?'After I <b>'+esc(S.cue)+'</b>, I read one page and save one note.':'Set your reading cue: after what will you read each day?')+'</button>'}
 function teaser(){var all=[];S.books.forEach(function(b){b.notes.forEach(function(n){all.push([n,b])})});if(all.length<3)return"";var p=all[Math.floor(Date.now()/864e5)%all.length],w=p[0].text.split(/\s+/);return '<button class="gap" data-act="reveal" data-b="'+p[1].id+'" data-n="'+p[0].id+'"><span class="meta">From “'+esc(p[1].title)+'”</span><span class="peek">'+esc(w.slice(0,4).join(" "))+' <span class="fog">'+esc(w.slice(4,9).join(" ")||"…")+'</span></span><span class="meta">Tap to remember the rest</span></button>'}
 function prog(b){var c=[];b.notes.forEach(function(n){if(n.chapter&&c.indexOf(n.chapter)<0)c.push(n.chapter)});if(!c.length)return"";return '<div class="prog"><div class="ticks">'+c.slice(0,24).map(function(){return"<i></i>"}).join("")+'</div><span>'+c.length+(c.length===1?" chapter":" chapters")+' captured</span></div>'}
+function aboutSheet(){openSheet('<div class="about"><h2>About Marginalia</h2><p>Marginalia is a reading companion. It helps you save the quotes, topics and stories you want to remember, organised by book and chapter, then brings them back so they stay with you.</p><p>I built it because reading is easy to forget. Spaced review, links between books, and a garden that grows as you finish books turn reading into something that lasts.</p><p class="meta">Built by Sibghatullah, a student who wanted to remember what he reads. Made with Claude, Antigravity, GitHub and Vercel. Your notes stay on your own device.</p><div class="acts"><button type="button" class="btn primary" data-act="close">Close</button></div></div>')}
 function cueForm(){openSheet('<form id="cf"><h2>Your reading cue</h2><label>After I…<input type="text" name="cue" maxlength="60" placeholder="finish dinner" value="'+esc(S.cue||"")+'"></label><p class="meta">Linking reading to something you already do makes it automatic.</p><div class="acts"><button type="button" class="btn" data-act="close">Cancel</button><button class="btn primary">Save cue</button></div></form>')}
 function toast(m){var e=$("#toast");e.textContent=m;e.classList.add("show");clearTimeout(toast.t);toast.t=setTimeout(function(){e.classList.remove("show")},3000)}
 var SURPRISE=["Good catch. Notes like this are the ones you come back to.","Future you will thank you for this one.","One more idea you won’t lose.","Sharp eye. Few readers stop to write it down."];
@@ -251,7 +255,7 @@ function noteHTML(n,b,showBook){
 function render(){
   var h="",app=$("#app");
   if(!view&&tab==="garden"){h+=garden()}else if(!view&&tab==="review"){h+=reviewHTML()}else if(!view&&tab==="journey"){h+=journey()}else if(!view){
-    h+='<div class="top"><span class="brand">Marginalia</span><button class="link" data-act="addbook">Add book</button></div>';
+    h+='<div class="top"><button class="brand" data-act="about">Marginalia</button><button class="link" data-act="addbook">Add book</button></div>';
     h+='<div class="hero-wrap"><h1 class="hero">Your shelf</h1></div><p class="motto">'+motto()+'</p>';if(!q.trim()){h+=stats()+cuehtml()+teaser()}
     if(S.books.length)h+='<input class="search" id="q" type="search" placeholder="Search all your notes" value="'+esc(q)+'" aria-label="Search all your notes">';
     var term=q.trim().toLowerCase();
@@ -313,6 +317,7 @@ document.addEventListener("click",function(e){
   else if(a==="filter"){filter=t.dataset.t;anim=true;render()}
   else if(a==="addbook")bookForm();
   else if(a==="cue")cueForm();
+  else if(a==="about")aboutSheet();
   else if(a==="quick"){var qb=view||S.last;if(!qb||!book(qb))qb=S.books[0]&&S.books[0].id;if(qb)noteForm(qb);else bookForm()}
   else if(a==="rshow"){rshown=true;render()}
   else if(a==="rate"){var cur=dueList();if(cur[0])rateNote(cur[0][0],t.dataset.r);rshown=false;save();render();if(cur.length===1)toast("Review complete. Those ideas are stronger now.")}

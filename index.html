@@ -185,6 +185,9 @@ textarea{min-height:130px;resize:vertical;font-size:1.05rem}
 .about{padding:22px 20px calc(22px + env(safe-area-inset-bottom,0px));display:grid;gap:14px}
 .about h2{font-size:1.5rem}
 .about p{margin:0}
+.mask-box{position:relative;overflow:hidden;border-radius:14px;cursor:crosshair;user-select:none;-webkit-user-select:none}
+.mask-box .mask-layer{position:absolute;inset:0;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;background:var(--ink);color:var(--bg);padding:16px;border-radius:14px;-webkit-mask-image:url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIj48Y2lyY2xlIGN4PSI1MCIgY3k9IjUwIiByPSI1MCIgZmlsbD0id2hpdGUiLz48L3N2Zz4=");-webkit-mask-repeat:no-repeat;mask-image:url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIj48Y2lyY2xlIGN4PSI1MCIgY3k9IjUwIiByPSI1MCIgZmlsbD0id2hpdGUiLz48L3N2Zz4=");mask-repeat:no-repeat;-webkit-mask-position:calc(var(--mx,-500px) - var(--ms,0px)/2) calc(var(--my,-500px) - var(--ms,0px)/2);mask-position:calc(var(--mx,-500px) - var(--ms,0px)/2) calc(var(--my,-500px) - var(--ms,0px)/2);-webkit-mask-size:var(--ms,0px);mask-size:var(--ms,0px);transition:-webkit-mask-size .28s cubic-bezier(.2,.8,.2,1),mask-size .28s cubic-bezier(.2,.8,.2,1);pointer-events:none}
+.mask-box:hover .mask-layer,.mask-box.touching .mask-layer{--ms:260px}
 </style>
 </head>
 <body>
@@ -227,7 +230,7 @@ if(!total())return h+'<div class="empty"><b>Nothing to review yet</b>Save a few 
 if(!L.length){var dd=Math.max(1,Math.ceil((nextDue()-Date.now())/864e5));return h+'<div class="empty"><b>All caught up</b>Your next review is in '+dd+(dd===1?" day":" days")+'.</div>'}
 var n=L[0][0],b=L[0][1],s=n.rs||0,w=n.text.split(/\s+/);
 h+='<p class="meta">'+L.length+' to review</p><section class="note rcard '+n.type+'"><div class="tag">'+TYPES[n.type]+' from “'+esc(b.title)+'”'+(n.chapter?', '+esc(n.chapter):'')+'</div>';
-if(!rshown)h+='<p class="prompt">Recall it first. It starts with: <em>'+esc(w.slice(0,3).join(" "))+'…</em></p><button class="btn primary" data-act="rshow">Show the note</button>';
+if(!rshown)h+='<div class="mask-box" style="margin:10px 0 16px;padding:16px;background:var(--surface);border:1px dashed var(--line);border-radius:12px;min-height:96px"><p class="prompt" style="margin:0 0 6px">Recall it first. It starts with: <em>'+esc(w.slice(0,3).join(" "))+'…</em></p><p class="meta">Move cursor or drag finger to peek</p><div class="mask-layer"><p style="font-family:var(--serif);font-size:1.15rem;line-height:1.4;margin:0;color:var(--bg)">“'+esc(n.text)+'”</p></div></div><button class="btn primary" data-act="rshow">Show the note</button>';
 else h+='<div class="txt">'+esc(n.text)+'</div><p class="meta" style="margin:16px 0 8px">How well did you remember it?</p><div class="rate">'+[["forgot","Forgot","1 day"],["hard","Hard",DAYS[s]+(DAYS[s]===1?" day":" days")],["good","Got it",DAYS[Math.min(s+1,3)]+" days"]].map(function(r){return '<button data-act="rate" data-r="'+r[0]+'"><b>'+r[1]+'</b><span>Again in '+r[2]+'</span></button>'}).join("")+'</div>';
 return h+'</section>'}
 function bookSel(bid){return S.books.length>1?'<label>Book<select name="bk">'+S.books.map(function(b){return '<option value="'+b.id+'"'+(b.id===bid?" selected":"")+'>'+esc(b.title)+'</option>'}).join("")+'</select></label>':""}
@@ -271,9 +274,9 @@ function stats(){var s=streak(),t=today(),tot=total(),dots="";for(var i=6;i>=0;i
 var next=[10,25,50,100].filter(function(x){return x>tot})[0];
 return '<section class="stats"><div class="streak"><b>'+s+'</b><span>'+(s===1?"day":"days")+' in a row</span></div><div class="dots" aria-label="Last 7 days">'+dots+'</div><div class="goal"><div class="bar"><span style="width:'+Math.min(100,t/3*100)+'%"></span></div><span>'+(t>=3?"Daily goal done":t+" of 3 notes today")+'</span></div><p class="ident">You are a <em>'+level(tot)+'</em>. '+(next?(next-tot)+" more notes to level up.":"Top level reached.")+(tot?' Your collection holds '+S.books.length+(S.books.length===1?" book":" books")+' and '+count(tot)+'.':'')+'</p></section>'}
 function cuehtml(){return '<button class="cue" data-act="cue">'+(S.cue?'After I <b>'+esc(S.cue)+'</b>, I read one page and save one note.':'Set your reading cue: after what will you read each day?')+'</button>'}
-function teaser(){var all=[];S.books.forEach(function(b){b.notes.forEach(function(n){all.push([n,b])})});if(all.length<3)return"";var p=all[Math.floor(Date.now()/864e5)%all.length],w=p[0].text.split(/\s+/);return '<button class="gap" data-act="reveal" data-b="'+p[1].id+'" data-n="'+p[0].id+'"><span class="meta">From “'+esc(p[1].title)+'”</span><span class="peek">'+esc(w.slice(0,4).join(" "))+' <span class="fog">'+esc(w.slice(4,9).join(" ")||"…")+'</span></span><span class="meta">Tap to remember the rest</span></button>'}
+function teaser(){var all=[];S.books.forEach(function(b){b.notes.forEach(function(n){all.push([n,b])})});if(all.length<3)return"";var p=all[Math.floor(Date.now()/864e5)%all.length],w=p[0].text.split(/\s+/);return '<button class="gap mask-box" data-act="reveal" data-b="'+p[1].id+'" data-n="'+p[0].id+'"><span class="meta">From “'+esc(p[1].title)+'” • Move cursor to reveal</span><span class="peek">'+esc(w.slice(0,4).join(" "))+' <span class="fog">'+esc(w.slice(4,10).join(" ")||"…")+'</span></span><span class="meta">Tap to open full note</span><div class="mask-layer"><span class="meta" style="color:var(--line)">From “'+esc(p[1].title)+'” ✨</span><span class="peek" style="color:var(--bg)">“'+esc(p[0].text.slice(0,140))+(p[0].text.length>140?'…':'')+'”</span></div></button>'}
 function prog(b){var c=[];b.notes.forEach(function(n){if(n.chapter&&c.indexOf(n.chapter)<0)c.push(n.chapter)});if(!c.length)return"";return '<div class="prog"><div class="ticks">'+c.slice(0,24).map(function(){return"<i></i>"}).join("")+'</div><span>'+c.length+(c.length===1?" chapter":" chapters")+' captured</span></div>'}
-function aboutSheet(){openSheet('<div class="about"><h2>About Marginalia</h2><p>Marginalia is a reading companion. It helps you save the quotes, topics and stories you want to remember, organised by book and chapter, then brings them back so they stay with you.</p><p>I built it because reading is easy to forget. Spaced review, links between books, and a garden that grows as you finish books turn reading into something that lasts.</p><p class="meta">Built by Sibghatullah, a student who wanted to remember what he reads. Your notes stay on your own device.</p><div class="acts"><button type="button" class="btn primary" data-act="close">Close</button></div></div>')}
+function aboutSheet(){openSheet('<div class="about"><h2>About Marginalia</h2><p>Marginalia is a reading companion. It helps you save the quotes, topics and stories you want to remember, organised by book and chapter, then brings them back so they stay with you.</p><p>I built it because reading is easy to forget. Spaced review, links between books, and a garden that grows as you finish books turn reading into something that lasts.</p><div class="mask-box" style="padding:20px;border:1px dashed var(--line);background:var(--bg);text-align:center"><p class="meta" style="margin-bottom:4px">SVG Mask Effect</p><p style="font-weight:600;margin:0">Move your cursor or touch here to reveal ✨</p><div class="mask-layer"><p style="font-family:var(--serif);font-size:1.15rem;font-style:italic;margin:0;color:var(--bg)">“Read slowly. Remember longer.”</p></div></div><p class="meta">Built by Sibghatullah, a student who wanted to remember what he reads. Your notes stay on your own device.</p><div class="acts"><button type="button" class="btn primary" data-act="close">Close</button></div></div>')}
 function cueForm(){openSheet('<form id="cf"><h2>Your reading cue</h2><label>After I…<input type="text" name="cue" maxlength="60" placeholder="finish dinner" value="'+esc(S.cue||"")+'"></label><p class="meta">Linking reading to something you already do makes it automatic.</p><div class="acts"><button type="button" class="btn" data-act="close">Cancel</button><button class="btn primary">Save cue</button></div></form>')}
 function toast(m){var e=$("#toast");e.textContent=m;e.classList.add("show");clearTimeout(toast.t);toast.t=setTimeout(function(){e.classList.remove("show")},3000)}
 var SURPRISE=["Good catch. Notes like this are the ones you come back to.","Future you will thank you for this one.","One more idea you won’t lose.","Sharp eye. Few readers stop to write it down."];
@@ -367,6 +370,18 @@ document.addEventListener("click",function(e){
   else if(a==="delbook"){var b=book(view);if(confirm("Delete \u201C"+b.title+"\u201D and its "+count(b.notes.length)+"?")){S.books=S.books.filter(function(x){return x.id!==view});view=null;save();closeSheet();render()}}
   else if(a==="delnote"){var f=$("#nf"),bb=book(f.dataset.b);if(confirm("Delete this note?")){bb.notes=bb.notes.filter(function(x){return x.id!==f.dataset.n});save();closeSheet();render()}}
 });
+
+function handleMaskPointer(e){
+  var box=e.target.closest&&e.target.closest(".mask-box");
+  if(!box)return;
+  var r=box.getBoundingClientRect(),x=(e.clientX||(e.touches&&e.touches[0].clientX)||0)-r.left,y=(e.clientY||(e.touches&&e.touches[0].clientY)||0)-r.top;
+  box.style.setProperty("--mx",x+"px");
+  box.style.setProperty("--my",y+"px");
+  box.classList.add("touching");
+}
+document.addEventListener("pointermove",handleMaskPointer);
+document.addEventListener("touchmove",handleMaskPointer,{passive:true});
+document.addEventListener("pointerleave",function(e){var b=e.target.closest&&e.target.closest(".mask-box");if(b)b.classList.remove("touching")},true);
 
 document.addEventListener("keydown",function(e){if(e.key==="Enter"&&(e.ctrlKey||e.metaKey)&&e.target.form)e.target.form.requestSubmit()});
 document.addEventListener("submit",function(e){
